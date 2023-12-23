@@ -10,6 +10,8 @@ Changes intended:
 2. Support for Windows first.
 3. Support on a non-Windows platform.
 
-Use https://github.com/jjuiddong/SerialPort for Windows serial communication.
-Use Visual Studio Code to build Windows executable.
+Changes made:
+1. Use https://github.com/jjuiddong/SerialPort for Windows serial communication.
+2. Timing is tuned to support only 9600 baud.
+3. Use Visual Studio Code to build Windows executable.
 
