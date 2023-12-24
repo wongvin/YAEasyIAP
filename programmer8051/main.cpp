@@ -1,3 +1,12 @@
+// YAEasyIAP
+// Yet Another EasyIAP
+// A command line tool to flash binary to SST89E516RD
+//
+// Usage: yaeasyiap.exe <port_num> <filename.hex>
+//
+// This project is forked from https://github.com/kikeEVO/SST-8051-Programer
+// Use https://github.com/jjuiddong/SerialPort for Windows serial communication.
+
 #include <cstdio>
 #include <iostream>
 #include <unistd.h>
@@ -37,7 +46,7 @@ private:
         int a = n_Sector & 0x1f;
         int b = n_Sector>>5;
 
-        if(sector_flags[b] & (1<<a))
+        if (sector_flags[b] & (1<<a))
             return true;
 
         return false;
@@ -52,7 +61,7 @@ public:
 
     int writeSector(int address, char* array, int length)
     {
-        if(length < 1)
+        if (length < 1)
             return 0;
 
         int a;
@@ -67,7 +76,7 @@ public:
 
     char* getSector(int n_Sector)
     {
-        if(getFlag(n_Sector))
+        if (getFlag(n_Sector))
             return memory+(n_Sector*128);
         else
             return NULL;
@@ -77,21 +86,20 @@ public:
 void delay(int);
 bool startCommunication(CSerial* port);
 void runMcu(CSerial*);
-int programMcu(CSerial* , Memory8051* );
+int programMcu(CSerial* , Memory8051*);
 int checkFileSyntax(FILE*);
 int readHexFile(FILE* , Memory8051*);
-unsigned int hexStringToInt(char* , int );
-void writeMcuSector(CSerial* , int , char* , int );
-int readMcuSector(CSerial* , int , char* , int );
-bool eraseMcuSector(CSerial* , int , int );
-bool compareArrays(char* , char* , int );
-void sendSerialData(CSerial* , char* , int );
-int readSerialData(CSerial* , char* , int , int );
-int error(int );
+unsigned int hexStringToInt(char* , int);
+void writeMcuSector(CSerial* , int , char* , int);
+int readMcuSector(CSerial* , int , char* , int);
+bool eraseMcuSector(CSerial* , int , int);
+bool compareArrays(char* , char* , int);
+void sendSerialData(CSerial* , char* , int);
+int readSerialData(CSerial* , char* , int , int);
+int error(int);
 int getArguments(int argc, char *argv[], int*, char*);
 
-/*****************************************************************************************/
-/*****************************************************************************************/
+//------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
     //char* port_name = "/dev/ttyUSB0";
@@ -105,7 +113,7 @@ int main(int argc, char *argv[])
     std::cout << "Build: " << __DATE__ << " " << __TIME__ << std::endl;
     std::cout << std::endl;
 
-    if(getArguments(argc, argv, &port_num, file_name) != 0)
+    if (getArguments(argc, argv, &port_num, file_name) != 0)
         return 1;
 
     FILE* FileRead;
@@ -115,7 +123,7 @@ int main(int argc, char *argv[])
     if (FileRead == NULL)
         return error(1);
 
-    if( error(checkFileSyntax(FileRead)))
+    if (error(checkFileSyntax(FileRead)))
         return 0;
 
     Memory8051 Memory;
@@ -135,12 +143,12 @@ int main(int argc, char *argv[])
     {
         std::cout << "Connecting" << std::endl;
 
-        if(startCommunication(&com_port))
+        if (startCommunication(&com_port))
         {
             std::cout << "Device connected" << std::endl;
 	    delay(2000);
 
-            if(error(programMcu(&com_port, &Memory)) == 0)
+            if (error(programMcu(&com_port, &Memory)) == 0)
                 std::cout << "Programming done" << std::endl;
 
             runMcu(&com_port);
@@ -157,27 +165,27 @@ int main(int argc, char *argv[])
     return error(5);               // failed exit
 
 }
-/*****************************************************************************************/
-/*****************************************************************************************/
 
+//------------------------------------------------------------------------------
 int programMcu(CSerial* port, Memory8051* Memory)
 {
     int n_sectors = 0;
     int sectors[512];
 
-    for(int a = 0; a < 512; a++)
+    for (int a = 0; a < 512; a++)
     {
         char* array = Memory->getSector(a);
-        if(array != NULL)
+
+        if (array != NULL)
         {
             sectors[n_sectors] = a;
             n_sectors++;
         }
     }
 
-    for(int a = 0; a < n_sectors; a++)
+    for (int a = 0; a < n_sectors; a++)
     {
-        if(!eraseMcuSector(port, sectors[a]*128, 1))
+        if (!eraseMcuSector(port, sectors[a]*128, 1))
             return 8;
 
         delay(5);
@@ -189,17 +197,17 @@ int programMcu(CSerial* port, Memory8051* Memory)
 
     std::cout << std::endl;
 
-    for(int a = 0; a < n_sectors; a++)
+    for (int a = 0; a < n_sectors; a++)
     {
         char* array = Memory->getSector(sectors[a]);
         char sector[128];
 
         writeMcuSector(port, sectors[a]*128, array, 128);
 
-        if(readMcuSector(port, a*128, sector, 128) != 128) 
+        if (readMcuSector(port, a*128, sector, 128) != 128) 
             return 6;
 
-        if(!compareArrays(sector, array, 128))
+        if (!compareArrays(sector, array, 128))
             return 6;
 
 #ifdef DEBUG
@@ -216,6 +224,7 @@ int programMcu(CSerial* port, Memory8051* Memory)
     return 0;
 }
 
+//------------------------------------------------------------------------------
 void runMcu(CSerial* port)
 {
     char run_cmd[] = {(char)0x62, (char)0x62};
@@ -223,6 +232,7 @@ void runMcu(CSerial* port)
     sendSerialData(port, run_cmd, 2);
 }
 
+//------------------------------------------------------------------------------
 bool eraseMcuSector(CSerial* port, int address, int n_sector)
 {
     char run_cmd[4] = {(char)0x0b};
@@ -243,12 +253,13 @@ bool eraseMcuSector(CSerial* port, int address, int n_sector)
     if (readSerialData(port, run_cmd, 1, 5) != 1) 
         return false;
 
-    if(run_cmd[0] != (char)0xc0) 
+    if (run_cmd[0] != (char)0xc0) 
         return false;
 	
     return true;
 }
 
+//------------------------------------------------------------------------------
 void writeMcuSector(CSerial* port, int address, char* array, int n_bytes)
 {
     char run_cmd[4] = {(char)0x0e};
@@ -270,6 +281,7 @@ void writeMcuSector(CSerial* port, int address, char* array, int n_bytes)
     sendSerialData(port, array, n_bytes);
 }
 
+//------------------------------------------------------------------------------
 int readMcuSector(CSerial* port, int address, char* array, int n_bytes)
 {
     char run_cmd[4] = {(char)0x0c};
@@ -289,6 +301,7 @@ int readMcuSector(CSerial* port, int address, char* array, int n_bytes)
     return readSerialData(port, array, n_bytes, 10);
 }
 
+//------------------------------------------------------------------------------
 bool startCommunication(CSerial* port)
 {
     char baud_test[] = {(char)0x80, (char)0xe0, (char)0xf8, (char)0xfe,
@@ -312,7 +325,7 @@ bool startCommunication(CSerial* port)
         delay(100);
     }
 
-    if(!compareArrays(check, (char*)"OK", 2))
+    if (!compareArrays(check, (char*)"OK", 2))
         return false;
 
 #ifdef DEBUG
@@ -325,7 +338,7 @@ bool startCommunication(CSerial* port)
     if (readSerialData(port, check, 3, 3) != 3)
         return false;
 
-    if(!compareArrays(check, (char*)"RDY", 3))
+    if (!compareArrays(check, (char*)"RDY", 3))
         return false;
 
 #ifdef DEBUG
@@ -339,7 +352,7 @@ bool startCommunication(CSerial* port)
         return false;
 
 /*
-    if(check[0] != 0x08)                           // this may differ, skip check
+    if (check[0] != 0x08)                           // this may differ, skip check
         return false;
 */
 
@@ -350,14 +363,14 @@ bool startCommunication(CSerial* port)
         return false;
 
 /*
-    if((check[0] != 0x11) || (check[1] != 0x46))   // this may differ, skip check
+    if ((check[0] != 0x11) || (check[1] != 0x46))   // this may differ, skip check
         return false;
 */
 
     return true;
 }
 
-
+//------------------------------------------------------------------------------
 int checkFileSyntax(FILE* file_to_check)
 {
     char line[256];
@@ -367,14 +380,14 @@ int checkFileSyntax(FILE* file_to_check)
 
     rewind (file_to_check);
 
-    while(fgets (line , 255 , file_to_check) != NULL)
+    while (fgets(line , 255 , file_to_check) != NULL)
     {
         int len = strlen(line) -1;
 
-        if(len<11)
+        if (len<11)
             return 2;
 
-        if(line[0] != ':')
+        if (line[0] != ':')
             return 2;
 
         int n_bytes = (len-1)/2;
@@ -387,18 +400,19 @@ int checkFileSyntax(FILE* file_to_check)
             check_sum += bytes[a];
         }
 
-        if(bytes[0] != (n_bytes - 5))
+        if (bytes[0] != (n_bytes - 5))
             return 2;
 
         check_sum -= bytes[n_bytes-1];
 
-        if(bytes[n_bytes-1] != ((-check_sum) & 0xff))
+        if (bytes[n_bytes-1] != ((-check_sum) & 0xff))
             return 3;
     }
 
     return 0;
 }
 
+//------------------------------------------------------------------------------
 int readHexFile(FILE* file_to_check, Memory8051* Memory)
 {
     char line[256];
@@ -410,7 +424,7 @@ int readHexFile(FILE* file_to_check, Memory8051* Memory)
 
     int n = 0;
 
-    while(fgets (line , 255 , file_to_check) != NULL)
+    while (fgets(line , 255 , file_to_check) != NULL)
     {
         int n_bytes = (strlen(line) -2)/2;
         unsigned char bytes[n_bytes];
@@ -423,18 +437,20 @@ int readHexFile(FILE* file_to_check, Memory8051* Memory)
         int len = bytes[0];
         int addr = bytes[2]+(bytes[1]*256);
 
-        if(bytes[3] == 0)
+        if (bytes[3] == 0)
             n += Memory->writeSector(addr, (char*)(bytes+4), len);
     }
 
     return n;
 }
 
+//------------------------------------------------------------------------------
 void delay(int millis)
 {
     usleep(millis*1000);
 }
 
+//------------------------------------------------------------------------------
 unsigned int hexStringToInt(char* hex_string, int len)
 {
     unsigned int hex_int;
@@ -450,11 +466,13 @@ unsigned int hexStringToInt(char* hex_string, int len)
     return hex_int;
 }
 
+//------------------------------------------------------------------------------
 void sendSerialData(CSerial* port, char* array, int len)
 {
     port->SendData(array, len);
 }
 
+//------------------------------------------------------------------------------
 int readSerialData(CSerial* port, char* array, int len, int n_attempts)
 {
     int n_bytes = 0;                      // number of bytes read
@@ -482,20 +500,22 @@ int readSerialData(CSerial* port, char* array, int len, int n_attempts)
     return n_bytes;                       // return actual number of characters read
 }
 
+//------------------------------------------------------------------------------
 bool compareArrays(char* array1, char* array2, int len)
 {
-    for(int a=0; a<len; a++)
+    for (int a=0; a<len; a++)
     {
-        if(array1[a] != array2[a])
+        if (array1[a] != array2[a])
             return false;
     }
 
     return true;
 }
 
+//------------------------------------------------------------------------------
 int getArguments(int argc, char *argv[], int* port_num, char* file_name)
 {
-    if(argc != 3)
+    if (argc != 3)
     {
         std::cout << "Usage: yaeasyiap.exe <port_num> <filename.hex>" << std::endl;
         std::cout << "Example: yaeasyiap.exe 1 ";
@@ -510,6 +530,7 @@ int getArguments(int argc, char *argv[], int* port_num, char* file_name)
     return 0;
 }
 
+//------------------------------------------------------------------------------
 int error(int code)
 {
     switch (code)
