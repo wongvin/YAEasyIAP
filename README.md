@@ -14,4 +14,4 @@ Changes made:
 1. Use https://github.com/jjuiddong/SerialPort for Windows serial communication.
 2. Timing is tuned to support only 9600 baud.
 3. Use Visual Studio Code to build Windows executable.
-
+4. Add batch file template to find Virtual COM Port created by FTDI USB-to-Serial Cable and start the program. 
