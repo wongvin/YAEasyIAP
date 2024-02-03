@@ -10,7 +10,7 @@
                 "${workspaceFolder}\\*.cpp",
                 "-o",
                 "${fileDirname}\\yaeasyiap.exe",
-                ""
+                "-static"
             ],
             "options": {
                 "cwd": "C:/msys64/ucrt64/bin"
